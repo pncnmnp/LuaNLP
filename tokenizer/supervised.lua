@@ -2,6 +2,7 @@
 -- Sentence Segmentation using supvervised learning on Treebank corpus
 -- https://www.nltk.org/book/ch06.html#sentence-segmentation
 
+package.path = package.path .. ";../external/?.lua"
 json = require "json"
 inspect = require "inspect"
 naive_bayes = require('nb')
