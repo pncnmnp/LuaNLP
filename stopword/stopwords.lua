@@ -25,9 +25,9 @@ local function fetch_stop_words(stop_word_file)
     print(stop_word_file)
     local stop_words = {}
     local file = io.open(stop_word_file, "r")
-    local handle = io.popen("pwd")
-    local result = handle:read("*a")
-    handle:close()
+    -- local handle = io.popen("pwd")
+    -- local result = handle:read("*a")
+    -- handle:close()
 
     for line in file:lines() do
         if string.sub(line, 1, 1) ~= "#" then
