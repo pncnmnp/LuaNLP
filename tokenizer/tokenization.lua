@@ -7,9 +7,57 @@ local rex = require "rex_pcre"
 
 local Tokenize = {}
 
+-- Lots of repetition for this function!
+-- CENTRALIZE THIS!
+local function escape_pattern(text)
+    -- Escaping strings for gsub
+    -- https://stackoverflow.com/a/34953646/7543474
+    return text:gsub("([^%w])", "%%%1")
+end
+
+function Tokenize.generate_n_gram(input, n)
+    -- To generate n-grams
+    local white_space_tokens = Tokenize.whitespace_tokenize(input)
+    local tokens = {}
+    for token in white_space_tokens do
+        table.insert(tokens, token)
+    end
+
+    if n < 1 then
+        return {}
+    end
+
+    local n_grams = {}
+    -- If the n-grams value is greater than no of tokens found
+    if #tokens < n then
+        return {tokens}
+    end
+
+    for i=1, #tokens-n+1 do
+        local gram = {}
+        table.move(tokens, i, i+n-1, 1, gram)
+        table.insert(n_grams, gram)
+    end
+    return n_grams
+end
+
+function Tokenize.remove_punctuations(input)
+    -- Replaces all punctuations in the text with ""
+    -- Punctuations (from Python's string.punctuation)
+    local puncts = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    local escape_puncts = escape_pattern(puncts)
+    local without_puncs = string.gsub(input, string.format("[%s]+", escape_puncts), "")
+    return without_puncs
+end
+
 function Tokenize.regex_tokenize(input)
     --[[ Algorithm ported from Jurafsky and Martin
     Edition 3, Chapter 2, Page 16 - Figure 2.12
+
+    TODO: * date of birth - 07/09/09, 12th, 1st, 2nd (one capture)
+    * Numerical equations like 2+3/3
+    * Abbreviations like Dr. Mr. [done]
+    * .007, 099 (one capture) and IPs like 8.8.8.8 [done]
 
     Breakdown:
     >> (?:[a-zA-Z]\\.){2,} - matches acronyms (https://stackoverflow.com/questions/35076016/regex-to-match-acronyms)
@@ -20,7 +68,16 @@ function Tokenize.regex_tokenize(input)
     >> [{}.,;\'\"?():-_`!+-/|\\*] - matches various symbols
     Does not support all unicode characters
     --]]
-    local tokens = rex.gmatch(input, "(?:[a-zA-Z]\\.){2,}|(?:'[sS]|'[mM]|'[dD]|') |(?:'ll|'LL|'re|'RE|'ve|'VE|n't|N'T) |(?:(?!n't|N'T)[a-zA-Z])+(?:[-.][a-zA-Z]+)*|\\$?\\d+(?:\\.\\d+)?%?|\\.\\.\\.|[{}.,;\'\"?():-_`!+\\-\\/|\\*#%]")
+    local titles = "Dr\\.|Esq\\.|Hon\\.|Jr\\.|Mr\\.|Mrs\\.|Ms\\.|Messrs\\.|Mmes\\.|Msgr\\.|Prof\\.|Rev\\.|Rt\\. Hon\\.|Sr\\.|St\\.|Mt\\.|Gen\\.|Capt\\.|Col\\.|Lt\\.|Sgt\\.|Mst\\.|Maj\\.|Brig\\.|Cmnd\\.|Sen\\.|Rep\\.|Revd\\.|Assn\\."
+    local extract = string.format("(?:[a-zA-Z]\\.){2,}|(?:'[sS]|'[mM]|'[dD]|') |(?:%s)|(?:'ll|'LL|'re|'RE|'ve|'VE|n't|N'T) |(?:(?!n't|N'T)[a-zA-Z])+(?:[-.][a-zA-Z]+)*|[\\$\\.]?\\d+(?:\\.\\d+)*%%?|\\.\\.\\.|[{}.,;\'\"?():-_`!+\\-\\/|\\*#%%]", titles)
+    local tokens = rex.gmatch(input, extract)
+    return tokens
+end
+
+function Tokenize.emoji_tokenize(input)
+    -- Finds all the text-based emojis (non-unicode) from the input text
+    -- From https://stackoverflow.com/a/28077780
+    local tokens = rex.gmatch(input, "(\\:\\w+\\:|\\<[\\/\\]?3|[\\(\\)\\\\D|\\*\\$][\\-\\^]?[\\:\\;\\=]|[\\:\\;\\=B8][\\-\\^]?[3DOPp\\@\\$\\*\\\\)\\(\\/\\|])(?=\\s|[\\!\\.\\?]|$)")
     return tokens
 end
 
@@ -68,7 +125,7 @@ function Tokenize.sentence_tokenize(input)
     >> (?=[0-9]\\)) - positive lookahead used for lists like 3) and 1)
     --]]
     local titles = "Dr\\.|Esq\\.|Hon\\.|Jr\\.|Mr\\.|Mrs\\.|Ms\\.|Messrs\\.|Mmes\\.|Msgr\\.|Prof\\.|Rev\\.|Rt\\. Hon\\.|Sr\\.|St\\.|Mt\\.|Gen\\.|Capt\\.|Col\\.|Lt\\.|Sgt\\.|Mst\\.|Maj\\.|Brig\\.|Cmnd\\.|Sen\\.|Rep\\.|Revd\\.|Assn\\."
-    local tokens = rex.split(input, string.format("((?<=[a-z0-9\\)][.?!])|(?<=[a-z0-9][.?!]\")|(?<=[?!][?!])|(?<=\\.\\.)|(?<=\\. \\.))(?<!%s)(\\s|\r\n)(?=\"?[A-Z])|(\\s+|\r\n)(?=[0-9]\\.\\))|(\\s|\r\n)(?=[0-9]\\.)|(\\s|\r\n)(?=[0-9]\\))", titles))
+    local tokens = rex.split(input, string.format("((?<=[a-z0-9\\)][.?!])|(?<=[a-z0-9][.?!]\")|(?<=[?!][?!])|(?<=\\.\\.)|(?<=\\. \\.))(?<!%s)(\\s+|\r\n)(?=\"?[A-Z])|(\\s+|\r\n)(?=[0-9]\\.\\))|(\\s+|\r\n)(?=[0-9]\\.[^0-9])|(\\s+|\r\n)(?=[0-9]\\))", titles))
     return tokens
 end
 
