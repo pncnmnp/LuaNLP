@@ -21,6 +21,8 @@ local rex = require "rex_pcre"
 
     NOTE: The Tokenize.regex_tokenize in tokenization.lua is an experimental implementation
     of word tokenize. For more stability, it is recommended to use this implementation.
+
+    ALSO: Relevant comments from the original source are preserved while porting.
 --]]
 
 local TreebankWordTokenizer = {}
