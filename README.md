@@ -1,4 +1,11 @@
-# README
+# LuaNLP - Lua's NLP Toolkit
+
+## Dependencies
+This library is dependent on PCRE flavour of `[lrexlib](https://github.com/rrthomas/lrexlib)`.
+To install `lrexlib` -
+```bash
+luarocks install lrexlib-PCRE
+```
 
 ## Guide
 **This guide will take you around a short tour of LuaNLP**
