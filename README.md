@@ -569,3 +569,42 @@ As mentioned by the vaderSentiment authors in their README:
 > is specifically attuned to sentiments expressed in social media
 
 See `./sent/test_vader.lua` for tests on the `Kotzias et. al,. KDD 2015` paper's dataset.
+
+### Text Summarization
+
+Let us now explore **TextTeaser**, an automatic summarization algorithm supported by this library.
+This module is a port of the [Newspaper3k port](https://github.com/codelucas/newspaper/blob/master/newspaper/nlp.py) of TextTeaser which was originally written by [Jolo Balbin in Scala](https://github.com/MojoJolo/textteaser).
+
+To import the module -
+```lua
+summarizer = require("summarize.textteaser")
+```
+
+Syntax -
+```lua
+summarizer.summarize(title, text, max_sents)
+```
+
+```
+Args:
+    title: (::str::) Title of the text body which is to be summarized
+    text: (::str::) Text corpus to be summarized
+    max_sents: (::int::) Number of sentences in the summary
+```
+
+Summarizing our *Rosetta Stone* passage -
+```lua
+inspect(summarizer.summarize("Rosetta Stone", text, 3))
+```
+```
+"The Rosetta Stone is a granodiorite stele inscribed with three versions of a decree  issued in Memphis, Egypt in 196 BC during the Ptolemaic dynasty on behalf of King Ptolemy V  
+Epiphanes. The decree has only minor differences between  the three versions, making the Rosetta Stone key to deciphering the Egyptian scripts. The term 'Rosetta Stone' is now used to 
+refer to the essential clue to a new field of knowledge."
+```
+
+**NOTE:** The results in this module may slightly differ from those in Newspaper3k's 
+implementation as the word and sentence tokenizers have different implementations.
+This module depends on `./tokenizer/tokenization.lua`.
+
+Relevant discussion regarding TextTeaser can be found on [Hacker News](https://news.ycombinator.com/item?id=6536896).
+In this HN link, the author (MojoJolo) mentions referring to the paper: [Comments-Oriented Blog Summarization by Sentence Extraction](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.222.6530&rep=rep1&type=pdf).
