@@ -608,3 +608,52 @@ This module depends on `./tokenizer/tokenization.lua`.
 
 Relevant discussion regarding TextTeaser can be found on [Hacker News](https://news.ycombinator.com/item?id=6536896).
 In this HN link, the author (MojoJolo) mentions referring to the paper: [Comments-Oriented Blog Summarization by Sentence Extraction](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.222.6530&rep=rep1&type=pdf).
+
+### Keyword Extraction
+
+This library supports keyword extraction using an algorithm known as **Rapid Automatic Keyword Extraction (RAKE)** algorithm.
+This module is a Python port of RAKE by [Aneesha](https://github.com/aneesha/RAKE).
+
+To import the module -
+```lua
+keywords = require("keyword.rake")
+```
+
+Syntax -
+```lua
+keywords:run(text, topn)
+```
+```
+Args:
+    text: (::str::) Text corpus for extracting keywords from.
+    topn: (::int::) Number of keywords to be extracted
+```
+
+Extracting keywords from our *Rosetta Stone* passage -
+```lua
+keywords:run(text, 5)
+```
+```lua
+{   
+    "french officer pierre-françois bouchard", 
+    "ancient egyptian bilingual text recovered", 
+    "jean-françois champollion announced", 
+    "slightly earlier ptolemaic decrees", 
+    "aroused widespread public interest" 
+}
+```
+
+**When to use RAKE:** RAKE can primarily be used for obtaining key phrases in text body.
+For 1 or 2 token keywords, see the TextTeaser function `Summarize.keywords`.
+
+**NOTE:** By default, this implementation uses the `Smart` Stoplist. To change this -
+```lua
+Rake.stopword_type = <your-choice>
+
+-- By default, ./stopwords supports the following - 
+-- Fox StopList, NLTK's english Stoplist, and Smart Stoplist
+
+-- `build_stop_word_regex` is a local function in `./keyword/rake.lua`
+Rake._stop_word_pattern = build_stop_word_regex(Rake.stopword_type)
+Rake.run(text, topn)
+```
