@@ -253,3 +253,53 @@ inspect(character_tokens)
 ```
 
 ### Stemming
+The Porter stemmer implemented in this library is ported to Lua using the Python implementation on [Martin Porter's website](https://tartarus.org/martin/PorterStemmer/python.txt). The Porter algorithm can be found in the following paper - [Porter Algorithm](https://tartarus.org/martin/PorterStemmer/def.txt).
+
+To import module -
+```lua
+porter_stemmer = require("stemmer.porter")
+```
+
+Syntax
+```
+porter_stemmer:stem(word, start_index, end_index)
+Args:
+    word: (::str::) Word to be stemmed
+    start_index: (::int::) Starting index of the string (in almost all cases - 1)
+    end_index: (::int::) Ending index of the string (in most cases, length of the string)
+```
+
+Stemming words in the 3rd sentence -
+```lua
+to_stem_words = penn_word_tokenizer:tokenize(sent_tokens[3], false, false)
+for _, word in ipairs(to_stem_words) do
+    local stemmed = porter_stemmer:stem(word, 1, string.len(word))
+    print(word .. " -> " .. stemmed)
+end
+```
+```
+The -> The
+decree -> decre
+has -> ha
+only -> onli
+minor -> minor
+differences -> differ
+between -> between
+the -> the
+three -> three
+versions -> version
+, -> ,
+making -> make
+the -> the
+Rosetta -> Rosetta
+Stone -> Stone
+key -> kei
+to -> to
+deciphering -> deciph
+the -> the
+Egyptian -> Egyptian
+scripts -> script
+. -> .
+```
+
+This stemming algorithm has been successfully tested using testcases from [Martin Porter's website](https://tartarus.org/martin/PorterStemmer/) ([Vocabulary](https://tartarus.org/martin/PorterStemmer/voc.txt) and [Output](https://tartarus.org/martin/PorterStemmer/output.txt)).
