@@ -1,7 +1,7 @@
 # LuaNLP - Lua's NLP Toolkit
 
 ## Dependencies
-This library is dependent on PCRE flavour of `[lrexlib](https://github.com/rrthomas/lrexlib)`.
+This library is dependent on PCRE flavour of [`lrexlib`](https://github.com/rrthomas/lrexlib).
 To install `lrexlib` -
 ```bash
 luarocks install lrexlib-PCRE
@@ -664,3 +664,6 @@ Rake.stopword_type = <your-choice>
 Rake._stop_word_pattern = build_stop_word_regex(Rake.stopword_type)
 Rake.run(text, topn)
 ```
+
+## License
+This library is licensed under MIT License. For details regarding licenses of the codebases being ported, see the respective `.lua` files.
