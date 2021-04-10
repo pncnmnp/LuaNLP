@@ -305,6 +305,7 @@ scripts -> script
 This stemming algorithm has been successfully tested using testcases from [Martin Porter's website](https://tartarus.org/martin/PorterStemmer/) ([Vocabulary](https://tartarus.org/martin/PorterStemmer/voc.txt) and [Output](https://tartarus.org/martin/PorterStemmer/output.txt)).
 
 ### Parts of Speech
+
 An **averaged perceptron based Parts of Speech tagger** is implemented in this library. 
 This module is a port of NLTK's Averaged Perceptron Tagger 
 which in-turn was a port of Textblob's Averaged Perceptron Tagger.
@@ -398,7 +399,11 @@ inspect(pos_tagger:tag(penn_word_tokenizer:tokenize(sent_tokens[8], false, false
 { { "Lithographic", "JJ", 0.99525661280489 }, { "copies", "NNS", 0.9999999944953 }, { "and", "CC", 1.0 }, { "plaster", "NN", 0.97827922854818 }, { "casts", "NNS", 0.99998149375758 }, { "soon", "RB", 1.0 }, { "began", "VBD", 1.0 }, { "circulating", "VBG", 0.99999854714063 }, { "among", "IN", 1.0 }, { "European", "JJ", 0.99999399618361 }, { "museums", "NNS", 0.99996446558515 }, { "and", "CC", 1.0 }, { "scholars", "NNS", 0.97589828477377 }, { ".", ".", 1.0 } }
 ```
 
+On `conll-2000` testcases, the average perceptron-based implementation produces an accuracy of 97.33%. 
+See `./pos/conll2000/README.txt` for more details.
+
 ### Lemmatization
+
 Currently, for lemmatization, a **Wordnet-based lemmatization algorithm** is supported. This algorithm has been ported from NLTK's `nltk.stem.WordNetLemmatizer()` (sources are [`stem/wordnet.html`]() and [`corpus/reader/wordnet.html`](https://www.nltk.org/_modules/nltk/corpus/reader/wordnet.html)).
 
 To import the module - 
@@ -511,3 +516,56 @@ else
     return word
 end
 ```
+
+### Sentiment Analysis
+
+For sentiment analysis, **VADER algorithm** is supported. The implementation 
+in this library is a port of [vaderSentiment](https://github.com/cjhutto/vaderSentiment/) by CJ Hutto.
+
+To import the module -
+```lua
+vader = require('sent.vader')
+```
+
+Syntax -
+```lua
+vader:polarity_scores(sentence)
+```
+```
+Args:
+    sentence:  (::str::) Sentence to be classified
+```
+
+As the above *Rosetta Stone* passage has neutral sentences, testing on a different example -
+```lua
+inspect(vader:polarity_scores("Ferrari WON the F1 World Championship!!!!"))
+```
+```lua
+{
+  compound = 0.8591,
+  neg = 0.0,
+  neu = 0.32,
+  pos = 0.68
+}
+```
+
+**Drawbacks** of using VADER algorithm:
+
+As this is a lexicon and rule-based tool, it does not work in cases wherein the tokens are not in the lexicon, but convey sentiment. 
+For example: from the dataset included in the Paper `From Group to Individual Labels using Deep Features, Kotzias et. al,. KDD 2015`
+
+```
+Amazon Reviews
+(1) You can not answer calls with the unit, never worked once!
+(2) Item Does Not Match Picture.
+(3) Lasted one day and then blew up.
+(4) Adapter does not provide enough charging current.
+(5) I plugged it in only to find out not a darn thing worked.
+```
+
+All the selected sentences generate a *compound* score of 0 (i.e. neutral).
+
+As mentioned by the vaderSentiment authors in their README:
+> is specifically attuned to sentiments expressed in social media
+
+See `./sent/test_vader.lua` for tests on the `Kotzias et. al,. KDD 2015` paper's dataset.
