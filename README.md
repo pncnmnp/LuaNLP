@@ -303,3 +303,211 @@ scripts -> script
 ```
 
 This stemming algorithm has been successfully tested using testcases from [Martin Porter's website](https://tartarus.org/martin/PorterStemmer/) ([Vocabulary](https://tartarus.org/martin/PorterStemmer/voc.txt) and [Output](https://tartarus.org/martin/PorterStemmer/output.txt)).
+
+### Parts of Speech
+An **averaged perceptron based Parts of Speech tagger** is implemented in this library. 
+This module is a port of NLTK's Averaged Perceptron Tagger 
+which in-turn was a port of Textblob's Averaged Perceptron Tagger.
+For understanding of Parts-of-speech taggers and their implementations, refer the following 
+readings -
+* [Matthew Honnibal's blog detailing the concept](https://explosion.ai/blog/part-of-speech-pos-tagger-in-python)
+* [For an introduction to Parts of Speech Tagging](https://web.stanford.edu/~jurafsky/slp3/8.pdf)
+
+To import the module - 
+```lua
+pos_tagger = require("pos.perceptron")
+```
+
+Unlike the rest of the tasks, the **Parts of Speech tagger requires training on labelled data** 
+before it can make meaningful predictions. By default, you can train on the `conll2000` dataset
+using the code below.
+
+**NOTE:** The pretrained model is not shipped, so using POS tagging requires mandatory training on 
+some dataset.
+
+Visualization of `train.txt` from `conll2000`:
+```
+Confidence NN B-NP
+in IN B-PP
+the DT B-NP
+pound NN I-NP
+is VBZ B-VP
+.....
+```
+
+Syntax -
+```
+pos_tagger:train(sentences, nr_iter) -> To train the tagged sentences
+    Args:
+    sentences: Nested tables containing sentences and their corresponding parts-of-speech
+               tags. For example - 
+                     {
+                        { {'today','NN'},{'is','VBZ'},{'good','JJ'},{'day','NN'} }, 
+                        { {'yes','NNS'},{'it','PRP'},{'beautiful','JJ'} }
+                     }
+    nr_iter: (::int::) Number of training iterations
+
+pos_tagger:tag(tokens, return_conf, use_tagdict) -> To tag the tokenized sentences
+    Args:
+    tokens: (::array::) Array of tokens
+    return_conf: (::bool::) If true, returns the confidence scores of the tags
+    use_tagdict: (::bool::) If true, uses tag dictionary for single-tag words.
+                            If a token has a frequency of 20 or more and has a probability score 
+                            greater than 97% of predicting a certain tag, that tag is stored in a 
+                            dictionary. Such tokens' tags are then automatically indexed from this 
+                            dictionary.
+```
+
+For training (this code along with the testing part can be found in `./pos/conll2000_test.lua`) -
+```lua
+TRAIN_FILE = "./pos/conll2000/train.txt"
+
+function training(filename)
+    local file = io.open(filename, "r")
+    local done = false
+    local training_set = {}
+    while done ~= true do
+        local found_end_of_sentence = false
+        local sentence = {}
+        while found_end_of_sentence ~= true do
+            local sent = file:read()
+            local func = string.gmatch(sent, "[^%s]+")
+            local curr_word, tag, chunk_tag = func(), func(), func()
+            if curr_word == nil then
+                found_end_of_sentence = true
+            -- we have reached the end
+            elseif curr_word == "END_OF_TRAINING_FILE" then
+                found_end_of_sentence = true
+                done = true
+            else
+                table.insert(sentence, {curr_word, tag})
+            end
+        end
+        table.insert(training_set, sentence)
+    end
+    pos_tagger:train(training_set, 8)
+    file.close()
+end
+```
+
+For testing on the eighth sentence, try -
+```lua
+inspect(pos_tagger:tag(penn_word_tokenizer:tokenize(sent_tokens[8], false, false), true, true))
+```
+```
+{ { "Lithographic", "JJ", 0.99525661280489 }, { "copies", "NNS", 0.9999999944953 }, { "and", "CC", 1.0 }, { "plaster", "NN", 0.97827922854818 }, { "casts", "NNS", 0.99998149375758 }, { "soon", "RB", 1.0 }, { "began", "VBD", 1.0 }, { "circulating", "VBG", 0.99999854714063 }, { "among", "IN", 1.0 }, { "European", "JJ", 0.99999399618361 }, { "museums", "NNS", 0.99996446558515 }, { "and", "CC", 1.0 }, { "scholars", "NNS", 0.97589828477377 }, { ".", ".", 1.0 } }
+```
+
+### Lemmatization
+Currently, for lemmatization, a **Wordnet-based lemmatization algorithm** is supported. This algorithm has been ported from NLTK's `nltk.stem.WordNetLemmatizer()` (sources are [`stem/wordnet.html`]() and [`corpus/reader/wordnet.html`](https://www.nltk.org/_modules/nltk/corpus/reader/wordnet.html)).
+
+To import the module - 
+```lua
+wordnet = require("lemmatizer.wordnet")
+```
+
+Syntax -
+```lua
+wordnet:_morphy(word, pos, check_exceptions)
+```
+```
+Args:
+    word: (::str::) Word to be lemmatized
+    pos: (::str::) Parts of Speech for the word
+                   Available options are: 
+                     "v" - Verb
+                     "n" - Noun
+                     "a" - Adjective
+                     "s" - Satellite Adjective
+                     "r" - Adverb
+    check_exceptions: (::bool::) If true, it will check for any lemmatization related exceptions as 
+                                 mentioned by Wordnet. For list of exceptions related to a 
+                                 particular POS, see the respective `.exc` file in `./lemmatizer/wordnet`.
+```
+
+Additionaly, if curious regarding `s` and `a`, read [Different handling of Adjective and Satellite Adjective?](https://stackoverflow.com/questions/51634328/wordnetlemmatizer-different-handling-of-wn-adj-and-wn-adj-sat)
+
+**Remember:** It is essential that the words to be lemmatized are in **lowercase**.
+
+Lemmatizing the 3rd sentence - 
+```lua
+-- Tokenizer the sentence
+to_lemmatize_words = penn_word_tokenizer:tokenize(sent_tokens[3], false, false)
+
+-- Find out all the Parts of Speech of the words
+pos_tags = pos_tagger:tag(to_lemmatize_words, false, true)
+
+-- As wordnet deals with verbs, noun, adjective, and adverbs
+-- And as the tags returned by `pos_tagger:tag` follow the BrillTagger conventions
+-- like NN, RB, JJ, etc. We are creating a simple dictionary to map the 
+-- BrillTagger conventions to Wordnet conventions.
+map_tags = {N="n", J="a", R="r", V="v"}
+
+for i, word in ipairs(to_lemmatize_words) do
+    local lemmatized = word
+    local first_char_of_pos = string.sub(pos_tags[i][2], 1, 1)
+    local pos = map_tags[first_char_of_pos]
+
+    if pos ~= nil then 
+        -- find a lemmatized form for this word with a non-nil tag
+        lemmatized = wordnet:_morphy(string.lower(word), pos, true)[1]
+
+        -- If a word is not in Wordnet, wordnet:_morphy returns `nil`
+        -- So, substituting nil with the original word
+        if lemmatized == nil then
+            lemmatized = word
+        end
+    end
+    print(word .. " -> " .. lemmatized)
+end
+```
+```
+The -> The
+decree -> decree
+has -> have
+only -> only
+minor -> minor
+differences -> difference
+between -> between
+the -> the
+three -> three
+versions -> version
+, -> ,
+making -> make
+the -> the
+Rosetta -> Rosetta
+Stone -> stone
+key -> key
+to -> to
+deciphering -> decipher
+the -> the
+Egyptian -> egyptian
+scripts -> script
+. -> .
+```
+
+**NOTE:** After obtaining a list of potential lemmas using `nltk.corpus.wordnet._morphy(word, pos)`, 
+the following codeblock is executed by NLTK in Python:
+
+```python
+lemmas = wordnet._morphy(word, pos)
+return min(lemmas, key=len) if lemmas else word
+```
+
+Therefore, for words such as `saw` and POS of `v`, the lemmas obtained are - `["saw", "see"]`.
+Based on the above code, it returns `saw` as the lemma as words are of same length. 
+However, the question of which is right is subjective.
+
+To prevent confusion, `wordnet._morphy` provides all the possible lemmas. NLTK like functionality 
+can be performed as follows:
+
+```lua
+wn = require("wordnet")
+lemmas = wn:_morphy(word, pos, check_exceptions)
+if #lemmas ~= 0 then 
+    table.sort(lemmas)
+    return table[1]
+else
+    return word
+end
+```
