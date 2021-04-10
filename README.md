@@ -665,5 +665,8 @@ Rake._stop_word_pattern = build_stop_word_regex(Rake.stopword_type)
 Rake.run(text, topn)
 ```
 
+## Feature Request
+At present, this library supports a handful of algorithms. If there are any specific algorithms you would like me to port to Lua, add them to the discussion [LuaNLP Feature Requests](https://github.com/pncnmnp/LuaNLP/discussions/1). I will try implementing 1 feature every month.
+
 ## License
 This library is licensed under MIT License. For details regarding licenses of the codebases being ported, see the respective `.lua` files.
