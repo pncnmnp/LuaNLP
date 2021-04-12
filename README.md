@@ -697,7 +697,7 @@ Once `train.json`, `valid.json`, and `test.json` are obtained after the above me
 you can train the NER model using the following code -
 
 ```lua
-json = require("inspect.json")
+json = require("external.json")
 pt = require("pos.perceptron")
 
 -- Assuming train.json and valid.json are in ./pos/conll2003/
@@ -717,6 +717,16 @@ function training(filename)
 end
 
 training(TRAIN_FILE)
+```
+
+Performing NER on sixth sentence of *Rosetta Stone* passage -
+```lua
+-- It was discovered there in July 1799 by French officer Pierre-François Bouchard during the Napoleonic campaign in Egypt.
+ner_sent = penn_word_tokenizer:tokenize(sent_tokens[6], false, false)
+inspect(pt:tag(ner_sent))
+```
+```lua
+{ { "It", "O", 0.99797167678855 }, { "was", "O", 0.99999994433959 }, { "discovered", "O", 1.0 }, { "there", "O", 0.99999999999938 }, { "in", "O", 0.99999999992923 }, { "July", "O", 0.99999850186825 }, { "1799", "O", 0.99999999999998 }, { "by", "O", 1.0 }, { "French", "B-MISC", 0.99999999671776 }, { "officer", "O", 0.99999999999989 }, { "Pierre-François", "O", 0.95948598745703 }, { "Bouchard", "B-PER", 0.91195727669638 }, { "during", "O", 0.9999994612422 }, { "the", "O", 1.0 }, { "Napoleonic", "B-MISC", 0.96769051909557 }, { "campaign", "O", 1.0 }, { "in", "O", 0.99999999999984 }, { "Egypt", "B-LOC", 0.99789478864941 }, { ".", "O", 0.99999836506797 } }
 ```
 
 To test the model on `valid.json` or `test.json`, see `./pos/conll2003_test.lua`.
