@@ -19,10 +19,10 @@ LuaNLP supports many of the most used NLP tasks such as:
 * Sentiment Analysis
 * Keyword Extraction
 * Text Summarization
+* Named-entity Recognition
 * Stopwords and N-grams
 
-> As of 13/03/21, Named entity recognition, and Word sense disambiguation
-are under development.
+> As of 12/04/21, Word sense disambiguation is under development.
 
 Let us begin by loading some text -
 
@@ -665,8 +665,76 @@ Rake._stop_word_pattern = build_stop_word_regex(Rake.stopword_type)
 Rake.run(text, topn)
 ```
 
+### Named-entity Recognition
+At present, the averaged perceptron based implementation for Parts-of-Speech tagging can be easily modified to support Named-Entity Recognition.
+
+**What modification is required?**
+
+Modify line in `AveragedPerceptron.predict` in `./pos/perceptron.lua` -
+```lua
+    else 
+        best_label, conf = self.classes["VBZ"], 0
+```
+To -
+```lua
+    else 
+        best_label, conf = self.classes["B-LOC"], 0
+```
+The above line provided a non-nil `guess` as a starting guess for the perceptron to compare with the `truth` and update its weigths.
+As NER models do not possess `VBZ` class, we changed it to a more appropriate `B-LOC` class.
+
+To import the module -
+```lua
+ner_tagger = require("pos.perceptron")
+```
+
+Similar to Parts of Speech tagger, **Named Entity Recognition requires training on labelled data** before it can make meaningful predictions. By default, you can train on the conll2003 dataset by following the instructions mentioned below:
+
+To read instructions on how to download Conll2003 dataset inside `./pos/conll2003` and how to preprocess the data, 
+refer to `./pos/conll2003/README.txt`.
+
+Once `train.json`, `valid.json`, and `test.json` are obtained after the above mentioned preprocessing step, 
+you can train the NER model using the following code -
+
+```lua
+json = require("inspect.json")
+pt = require("pos.perceptron")
+
+-- Assuming train.json and valid.json are in ./pos/conll2003/
+TRAIN_FILE = "./pos/conll2003/train.json"
+
+function to_json(filename)
+    local file = io.open(filename, "r")
+    local sents = file.read(file, "*a")
+    file.close()
+    sents = json.decode(sents)
+    return sents
+end
+
+function training(filename)
+    local training_set = to_json(filename)
+    pt:train(training_set, 8)
+end
+
+training(TRAIN_FILE)
+```
+
+To test the model on `valid.json` or `test.json`, see `./pos/conll2003_test.lua`.
+
+Average Precision and Recall results after testing on Conll2003 five times (each was trained for 8 iterations) -
+
+___|LOC|MISC|ORG|PER|
+|---|---|---|---|---|
+Precision|0.8267|0.7416|0.7879|0.8617
+Recall|0.8514|0.7725|0.7307|0.8930
+
+The precision and recall for the `O` tag averaged around `0.987`.
+
 ## Feature Request
 At present, this library supports a handful of algorithms. If there are any specific algorithms you would like me to port to Lua, add them to the discussion [LuaNLP Feature Requests](https://github.com/pncnmnp/LuaNLP/discussions/1). I will try implementing 1 feature every month.
 
+## Author
+Parth Parikh ([https://pncnmnp.github.io](https://pncnmnp.github.io))
+
 ## License
-This library is licensed under MIT License. For details regarding licenses of the codebases being ported, see the respective `.lua` files.
+This library is licensed under [MIT License](https://github.com/pncnmnp/LuaNLP/blob/main/LICENSE). For details regarding licenses of the codebases being ported, see the respective `.lua` files.
