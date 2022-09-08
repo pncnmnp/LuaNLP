@@ -1,7 +1,7 @@
 # LuaNLP - Lua's NLP Toolkit
 
 The goal of this library is to provide native support for [Natural Language Processing tasks](https://en.wikipedia.org/wiki/Natural_language_processing#Common_NLP_tasks) in Lua.
-A comprehensive discussion regarding the tasks currently supported and their method of implementation is present in **Guide** subsection. Presently, this library is **not available on LuaRocks**, however, there are definite plans to add support by July '21.
+A comprehensive discussion regarding the tasks currently supported and their method of implementation is present in **Guide** subsection. Presently, this library is **not available on LuaRocks**, however, there are definite plans to add support in the future.
 
 ## Dependencies
 This library is dependent on PCRE flavour of [`lrexlib`](https://github.com/rrthomas/lrexlib).
